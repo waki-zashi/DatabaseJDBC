@@ -6,9 +6,14 @@ public class DBConnection {
 
     public static Connection getConnection(String host, int port, String database, String user, String password) throws SQLException {
 
-        String url = "jdbc:postgresql://" + host + ":" + port + "/" + database + "?charSet=UTF8";
+        String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
 
         try {
+            System.out.println(
+                    "CONNECTING: " + host + ":" + port + "/" + database +
+                            " USER=" + user
+            );
+
             Class.forName("org.postgresql.Driver");
         }
         catch (ClassNotFoundException e) {
