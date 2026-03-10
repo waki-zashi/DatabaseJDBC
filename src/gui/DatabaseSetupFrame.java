@@ -91,8 +91,8 @@ public class DatabaseSetupFrame extends JFrame {
                     host,
                     port,
                     "postgres",
-                    "postgres",
-                    "postgres"
+                    "db_admin",
+                    "admin"
             );
 
             var check = conn.prepareStatement(
@@ -128,6 +128,8 @@ public class DatabaseSetupFrame extends JFrame {
 
             var stmt = conn.createStatement();
 
+            conn.setAutoCommit(true);
+
             stmt.execute("CREATE DATABASE "+db);
 
             AppLogger.log("Database created: "+db);
@@ -157,11 +159,13 @@ public class DatabaseSetupFrame extends JFrame {
                 host,
                 port,
                 db,
-                "postgres",
-                "postgres"
+                "db_admin",
+                "admin"
         );
 
         Statement st = conn.createStatement();
+
+        AppLogger.log("Connected as: " + conn.getMetaData().getUserName());
 
         AppLogger.log("Initializing database "+db);
 
@@ -311,6 +315,12 @@ public class DatabaseSetupFrame extends JFrame {
         p_role,p_username);
         END;
         $$;
+        """);
+
+        st.execute("""
+        GRANT SELECT ON books TO guest_role;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON books TO admin_role;
+        GRANT USAGE, SELECT ON SEQUENCE books_id_seq TO admin_role;
         """);
 
         st.execute("""
