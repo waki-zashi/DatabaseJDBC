@@ -1,6 +1,7 @@
 package src.gui;
 
 import src.BookService;
+import src.DBConnection;
 import src.util.AppLogger;
 
 import javax.swing.*;
@@ -9,6 +10,7 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.List;
 
 public class MainFrame extends JFrame {
@@ -381,29 +383,39 @@ public class MainFrame extends JFrame {
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
-                "Delete database "+database+" ?",
+                "Delete database " + database + " ?",
                 "Confirm",
                 JOptionPane.YES_NO_OPTION
         );
 
-        if(confirm!=JOptionPane.YES_OPTION) return;
+        if (confirm != JOptionPane.YES_OPTION) return;
 
         try {
 
-            Connection postgres = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5433/postgres",
+            Connection conn = DBConnection.getConnection(
+                    "localhost",
+                    5433,
                     "postgres",
-                    "postgres"
+                    "db_admin",
+                    "admin"
             );
 
-            var stmt = postgres.prepareCall("CALL sp_drop_database(?)");
+            Statement st = conn.createStatement();
 
-            stmt.setString(1,database);
-            stmt.execute();
+            st.execute(
+                    "SELECT pg_terminate_backend(pid) " +
+                            "FROM pg_stat_activity " +
+                            "WHERE datname = '" + database + "' " +
+                            "AND pid <> pg_backend_pid();"
+            );
 
-            AppLogger.log("Database deleted: "+database);
+            st.execute("DROP DATABASE \"" + database + "\"");
 
-            JOptionPane.showMessageDialog(this,"Database deleted");
+            AppLogger.log("Database deleted: " + database);
+
+            JOptionPane.showMessageDialog(this, "Database deleted");
+
+            conn.close();
 
             new DatabaseSetupFrame();
             dispose();
